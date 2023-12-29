@@ -1,0 +1,34 @@
+import wave
+import struct
+
+# Input WAV file path
+input_file_path = "IMP23ABSU_MIC_1k_Test_Tone.wav"
+
+# Define the duration in seconds (21ms)
+duration_seconds = .021
+
+# Open the WAV file for reading
+with wave.open(input_file_path, 'rb') as wav_file:
+    # Get the audio parameters
+    num_channels = wav_file.getnchannels()
+    sample_width = wav_file.getsampwidth()
+    frame_rate = wav_file.getframerate()
+
+    print(f"Channels: {num_channels}")
+    print(f"Sample Width: {sample_width * 8} bits")
+    print(f"Frame Rate: {frame_rate} Hz")
+
+    # Calculate the number of frames for the first 20ms
+    num_frames = int(duration_seconds * frame_rate)
+    
+    # Read audio frames and collect PCM values
+    frames = wav_file.readframes(num_frames)
+    pcm_values = struct.unpack(f"{len(frames) // sample_width}h", frames)
+    
+    # Format PCM values as a list-like representation
+    pcm_values_str = "[" + ", ".join(map(str, pcm_values)) + "]"
+    
+    # print(f"Number of PCM Values in First 20ms: {len(pcm_values)}")
+    print("PCM Values:")
+    print(pcm_values_str)
+    print(f"Number of PCM Values in First 21ms: {len(pcm_values)}")

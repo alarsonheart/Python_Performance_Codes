@@ -88,7 +88,7 @@ plt.show()
 for i in range(num_peaks):
     print(f"Top Peak {i + 1} frequency (Audio Data): {top_peak_frequencies[i]:.2f} Hz")
     print(f"Top Peak {i + 1} magnitude (Audio Data): {top_peak_magnitudes[i]:.2f}")
-    print('')
+    # print('')
     # print(f"Top Peak {i + 1} height (Audio Data): {top_peak_heights[i]:.2f}")
 
 print(f"Data saved to {output_excel_file}")

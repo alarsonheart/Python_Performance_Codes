@@ -1,14 +1,15 @@
-'''This is a combo of from_wav_to_pcm2 and from_pcm_to_fft'''
+import wave
+import struct
 import numpy as np
 from scipy.fft import rfft, rfftfreq
 import time
-import wave
-import struct
 
 # Constants
+input_file_path = "500_to_3340_IMP23ABSU.wav" 
+duration_seconds = 0.021
 SAMPLING_FREQUENCY = 192000  # in Hz
 BUFFER_SIZE = 4032  # Size of PCM_Buffer
-DETECTION_FREQUENCY = 20000  # Frequency to detect (in Hz)
+DETECTION_FREQUENCY = 500  # Frequency to detect (in Hz)
 FREQUENCY_TOLERANCE = 50  # Tolerance for frequency detection (in Hz)
 TIMEOUT_SECONDS = 5  # Timeout in seconds
 
@@ -19,62 +20,38 @@ def find_top_frequencies(buffer):
     
     # Find frequencies
     freqs = rfftfreq(len(buffer), 1 / SAMPLING_FREQUENCY)
-    
+    #size is half of the length of the buffer (n/2) so 2017
+        
     # Get top 3 frequencies
     top_indices = np.argsort(fft_magnitude)[-3:]
     top_frequencies = freqs[top_indices]
-    return top_frequencies
+    top_magnitudes = fft_magnitude[top_indices]
+    return top_frequencies, top_magnitudes
 
-def process_pcm_data(pcm_data, PCM_Buffer):
-    PCM_Buffer.extend(pcm_data)
-    if len(PCM_Buffer) >= BUFFER_SIZE:
-        return True
-    else:
-        return False
+def main():
+    start_time = time.time()
 
-def from_wav_to_pcm(PCM_Buffer):
-    # Input WAV file path
-    input_file_path = "20_to_20k_audio_3.wav"
-
-    # Open the WAV file for reading
     with wave.open(input_file_path, 'rb') as wav_file:
-        num_channels = wav_file.getnchannels()
-        sample_width = wav_file.getsampwidth()
-        frame_rate = wav_file.getframerate()
+        num_frames = int(duration_seconds * SAMPLING_FREQUENCY)
 
         while True:
-            # Calculate the number of frames for the next 21ms
-            duration_seconds = 0.021
-            num_frames = int(duration_seconds * frame_rate)
             frames = wav_file.readframes(num_frames)
+            if len(frames) < num_frames * 2:  # 2 bytes per frame (16-bit PCM)
+                break  # End of file
 
-            # Break if no more frames are left
-            if not frames:
-                print("End of file reached.")
+            pcm_values = np.array(struct.unpack(f"{len(frames) // 2}h", frames))
+
+            top_frequencies, top_magnitudes = find_top_frequencies(pcm_values)
+
+            for freq, mag in zip(top_frequencies, top_magnitudes):
+                print(f"Frequency: {freq} Hz, Magnitude: {mag}")
+
+            if any(abs(freq - DETECTION_FREQUENCY) <= FREQUENCY_TOLERANCE for freq in top_frequencies):
+                print(f"{DETECTION_FREQUENCY}Hz found")
                 break
 
-            # Read audio frames and collect PCM values
-            pcm_values = struct.unpack(f"{len(frames) // sample_width}h", frames)
-
-            # Process PCM data and check for the target frequency
-            if process_pcm_data(pcm_values, PCM_Buffer):
-                top_frequencies = find_top_frequencies(PCM_Buffer)
-
-                if any(abs(freq - DETECTION_FREQUENCY) <= FREQUENCY_TOLERANCE for freq in top_frequencies):
-                    current_time = time.time()
-                    elapsed_time = current_time - start_time
-                    print(f"{DETECTION_FREQUENCY} Hz frequency found at {elapsed_time:.2f} seconds")
-                    break  # Stop if the target frequency is found
-
-                PCM_Buffer = PCM_Buffer[BUFFER_SIZE:]
-
-            # Check for timeout
             if time.time() - start_time >= TIMEOUT_SECONDS:
                 print("Timeout reached. Target frequency not found.")
                 break
 
-if __name__ == "__main__":
-    start_time = time.time()  # Record the start time
-    PCM_Buffer = []  # Initialize PCM_Buffer
-    from_wav_to_pcm(PCM_Buffer)
-
+main()

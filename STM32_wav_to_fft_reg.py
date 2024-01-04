@@ -15,7 +15,7 @@ TIMEOUT_SECONDS = 5  # Timeout in seconds
 
 def wave_to_pcm():
     # Input WAV file path
-    input_file_path = r"Audio_Files\500_to_3340_IMP23ABSU.wav"
+    input_file_path = r"Audio_Files\500Hz_IMP23ABSU_MIC.wav"
 
     # Define the duration in seconds (21ms)
     duration_seconds = 0.021

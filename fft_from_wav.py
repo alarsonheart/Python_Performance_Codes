@@ -16,8 +16,8 @@ from scipy.signal import find_peaks
 # Replace with the path to your .wav file
 # C:\Users\angel\OneDrive - Heartland Ag Tech\HATWellAcquision\Well_Data_Collected_8_31_2023\Good_Wells_8_31_2023\well_1\pump_discharge_inner_Exported\IMP23ABSU_MIC.wav
 # C:\Users\angel\OneDrive - Heartland Ag Tech\HATWellAcquision\Python_Performance_Codes
-input_wav_file = r'..\Well_Data_Collected_8_31_2023\Good_Wells_8_31_2023\well_1\below_motor_mount_Exported\IMP23ABSU_MIC.wav'
-# input_wav_file = r'IMP23ABSU_MIC_1k_Test_Tone.wav'
+# input_wav_file = r'..\Well_Data_Collected_8_31_2023\Good_Wells_8_31_2023\well_1\below_motor_mount_Exported\IMP23ABSU_MIC.wav'
+input_wav_file = r'Audio_Files\500Hz_IMP23ABSU_MIC.wav'
 # Read the .wav file
 sample_rate, audio_data = wavfile.read(input_wav_file)
 

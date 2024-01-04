@@ -1,3 +1,4 @@
+'''Takes code from from_wav_to_pcm_2 and from_pcm_to_fft.py and combines them into one program'''
 import wave
 import struct
 import numpy as np
@@ -5,12 +6,13 @@ from scipy.fft import rfft, rfftfreq
 import time
 
 # Constants
-input_file_path = "500_to_3340_IMP23ABSU.wav" 
+input_file_path = r"Audio_Files\500Hz_IMP23ABSU_MIC.wav" 
 duration_seconds = 0.021
 SAMPLING_FREQUENCY = 192000  # in Hz
 BUFFER_SIZE = 4032  # Size of PCM_Buffer
 DETECTION_FREQUENCY = 500  # Frequency to detect (in Hz)
-FREQUENCY_TOLERANCE = 50  # Tolerance for frequency detection (in Hz)
+FREQUENCY_TOLERANCE = 47.5  # Tolerance for frequency detection (in Hz) --bin size
+MAGNITUDE_THRESHOLD = 2000000  # Magnitude threshold for detection (singles out fundamentals instead of harmonics)
 TIMEOUT_SECONDS = 5  # Timeout in seconds
 
 def find_top_frequencies(buffer):
@@ -20,9 +22,8 @@ def find_top_frequencies(buffer):
     
     # Find frequencies
     freqs = rfftfreq(len(buffer), 1 / SAMPLING_FREQUENCY)
-    #size is half of the length of the buffer (n/2) so 2017
         
-    # Get top 3 frequencies
+    # Get top frequencies and magnitudes
     top_indices = np.argsort(fft_magnitude)[-3:]
     top_frequencies = freqs[top_indices]
     top_magnitudes = fft_magnitude[top_indices]
@@ -30,6 +31,7 @@ def find_top_frequencies(buffer):
 
 def main():
     start_time = time.time()
+    detected_frequency = None
 
     with wave.open(input_file_path, 'rb') as wav_file:
         num_frames = int(duration_seconds * SAMPLING_FREQUENCY)
@@ -46,12 +48,19 @@ def main():
             for freq, mag in zip(top_frequencies, top_magnitudes):
                 print(f"Frequency: {freq} Hz, Magnitude: {mag}")
 
-            if any(abs(freq - DETECTION_FREQUENCY) <= FREQUENCY_TOLERANCE for freq in top_frequencies):
-                print(f"{DETECTION_FREQUENCY}Hz found")
-                break
+            for freq, mag in zip(top_frequencies, top_magnitudes):
+                if abs(freq - DETECTION_FREQUENCY) <= FREQUENCY_TOLERANCE and mag > MAGNITUDE_THRESHOLD:
+                    detected_frequency = freq
+                    break  # Exit the loop if a matching frequency with sufficient magnitude is found
+
+            if detected_frequency is not None:
+                break  # Exit the main loop if a matching frequency is found
 
             if time.time() - start_time >= TIMEOUT_SECONDS:
                 print("Timeout reached. Target frequency not found.")
                 break
+
+    if detected_frequency is not None:
+        print(f"{detected_frequency} Hz found")
 
 main()

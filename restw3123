@@ -75,16 +75,24 @@ def process_audio_in_intervals(wav_file, interval_duration):
     num_frames_per_interval = int(interval_duration * frame_rate)
     total_frames = wav_file.getnframes()
     intervals = total_frames // num_frames_per_interval
-
+    unique_top_frequencies = {}
+    unique_top_magnitudes = {}
     for _ in range(intervals + 1):
         pcm_values = read_pcm_frames(wav_file, num_frames_per_interval)
-
-        # Find top frequencies and their magnitudes for this interval
         top_frequencies, top_magnitudes = find_top_frequencies(pcm_values)
+        for freq, mag in zip(top_frequencies, top_magnitudes):
+            if freq not in unique_top_frequencies or mag > unique_top_magnitudes[freq]:
+                unique_top_frequencies[freq] = mag
+                unique_top_magnitudes[freq] = mag
 
-        # Print the top frequencies and their magnitudes for this interval
+            '''This prints the top 10 frequencies for each interval'''
         for freq, mag in zip(top_frequencies, top_magnitudes):
             print(f"Frequency: {freq} Hz, Magnitude: {mag}")
+    '''This prints the top 10 frequencies found in the entire FFT (based only on magnitude so this is wrong)'''
+    sorted_freq_mags = sorted(unique_top_frequencies.items(), key=lambda x: x[1], reverse=True)
+    print("Top 10 Frequencies and Magnitudes (No Repeats):")
+    for freq, mag in sorted_freq_mags[:10]:
+        print(f"Frequency: {freq} Hz, Magnitude: {mag}")
 
 def visualize_fft_for_entire_clip(pcm_values, max_frequency=20000):
     freqs = rfftfreq(len(pcm_values), 1 / SAMPLING_FREQUENCY)
@@ -102,15 +110,23 @@ def visualize_fft_for_entire_clip(pcm_values, max_frequency=20000):
     plt.ylabel('Magnitude')
     plt.title('FFT Analysis for Entire Audio Clip (Up to 20,000 Hz)')
     plt.grid(True)
+
+    # Find peaks with a minimum magnitude of 1,000,000
+    peaks, _ = find_peaks(fft_magnitude, prominence=100000)
+
+    # Mark the peaks on the plot
+    for peak in peaks:
+        frequency = freqs[peak]
+        magnitude = fft_magnitude[peak]
+        plt.annotate('X', (frequency, magnitude), textcoords="offset points", xytext=(0, 10), ha='center', fontsize=12, color='red')
+
     plt.show()
-
-
 
 def main():
     # Input WAV file path
-    input_file_path = r"Audio_Files\400_1000_1700.wav"
+    # input_file_path = r"Audio_Files\400_1000_1700.wav"
     # input_file_path = r"Audio_Files\500_to_3340_IMP23ABSU.wav"
-    # input_file_path = r"Audio_Files\12311Hz_close_IMP23ABSU_MIC.wav"
+    input_file_path = r"Audio_Files\12311Hz_close_IMP23ABSU_MIC.wav"
 
     # Define the duration in seconds (21ms)
     interval_duration = 0.021

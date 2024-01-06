@@ -49,7 +49,14 @@ def visualize_fft_for_entire_clip(pcm_values, max_frequency=20000, height=None, 
     mask = freqs <= max_frequency     # Limit the frequency range to a maximum of 20,000 Hz
     freqs = freqs[mask]
     fft_magnitude = fft_magnitude[mask]
-    peaks, _ = find_peaks(fft_magnitude, height=height, distance=distance)
+    peaks, _ = find_peaks(fft_magnitude, height=6000000, distance=10000, threshold=20000)
+
+    peak_freqs = freqs[peaks]
+    peak_mags = fft_magnitude[peaks]
+# Print the peak frequencies and their magnitudes
+    print("Peak Frequencies and Magnitudes:")
+    for freq, mag in zip(peak_freqs, peak_mags):
+        print(f"Frequency: {freq} Hz, Magnitude: {mag}")
 
     plt.figure(figsize=(10, 6))
     plt.plot(freqs, fft_magnitude)
@@ -59,8 +66,6 @@ def visualize_fft_for_entire_clip(pcm_values, max_frequency=20000, height=None, 
     plt.title('FFT Analysis for Entire Audio Clip (Up to 20,000 Hz)')
     plt.grid(True)
     plt.show()
-    peak_freqs = freqs[peaks]
-    peak_mags = fft_magnitude[peaks]
     return peak_freqs, peak_mags
 
 def process_audio_in_intervals(wav_file, interval_duration):
@@ -85,14 +90,19 @@ def process_audio_in_intervals(wav_file, interval_duration):
             print(f"Frequency: {freq} Hz, Magnitude: {mag}")
     '''This prints the top 10 frequencies found in the entire FFT (based only on magnitude so this is wrong)'''
     sorted_freq_mags = sorted(unique_top_frequencies.items(), key=lambda x: x[1], reverse=True)
-    print("Top 10 Frequencies and Magnitudes (No Repeats):")
+    print("Top 10 Frequencies and Magnitudes (STM32 Match):") #this prints the frequencies using the bin size & buffer process similar to how it is done in STM32
     for freq, mag in sorted_freq_mags[:10]:
         print(f"Frequency: {freq} Hz, Magnitude: {mag}")
+    print()
+    print()
 
 def main():
     # input_file_path = r"Audio_Files\500Hz_IMP23ABSU_MIC.wav"
-    input_file_path = r"Audio_Files\500_to_3340_IMP23ABSU.wav"
+    # input_file_path = r"Audio_Files\500_to_3340_IMP23ABSU.wav"
     # input_file_path = r"Audio_Files\400_1000_1700.wav"
+    input_file_path = r"Well_Audio\Well_1\pump_discharge_inner.wav"
+
+
     interval_duration = 0.021  # Define the duration in seconds (21ms)
     with wave.open(input_file_path, 'rb') as wav_file:
         process_audio_in_intervals(wav_file, interval_duration)
@@ -101,6 +111,7 @@ def main():
         wav_file.rewind()
         pcm_values = read_pcm_frames(wav_file, wav_file.getnframes())
         visualize_fft_for_entire_clip(pcm_values)
+        
 
 if __name__ == "__main__":
     main()

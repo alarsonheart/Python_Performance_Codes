@@ -1,7 +1,4 @@
 
-
-
-
 import numpy as np
 from scipy.fft import rfft, rfftfreq
 import time
@@ -108,10 +105,10 @@ def process_audio_in_intervals(wav_file, interval_duration):
     print()
 
 def main():
-    # input_file_path = r"Audio_Files\500Hz_IMP23ABSU_MIC.wav"
+    input_file_path = r"Audio_Files\500Hz_IMP23ABSU_MIC.wav"
     # input_file_path = r"Audio_Files\500_to_3340_IMP23ABSU.wav"
     # input_file_path = r"Audio_Files\400_1000_1700.wav"
-    input_file_path = r"Well_Audio\Well_1\pump_discharge_inner.wav"
+    # input_file_path = r"Well_Audio\Well_1\pump_discharge_inner.wav"
 
 
     interval_duration = 0.021  # Define the duration in seconds (21ms)

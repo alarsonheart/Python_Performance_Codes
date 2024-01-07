@@ -1,7 +1,6 @@
 import numpy as np
 import wave
 import struct
-from scipy.signal.windows import blackmanharris
 from scipy.signal import find_peaks
 from matplotlib import pyplot as plt
 from numpy.lib import stride_tricks
@@ -28,9 +27,9 @@ def read_pcm_frames(wav_file, num_frames):
         num_frames -= chunk_size
     return np.array(pcm_values, dtype=np.float32)  # Ensure pcm_values are floating point
 
-# Short Time Fourier Transform (STFT) with Blackman-Harris window
-def stft(signal, frame_size, window_fn=blackmanharris):
-    window = window_fn(frame_size)
+# Short Time Fourier Transform (STFT) with Blackman window
+def stft(signal, frame_size):
+    window = np.blackman(frame_size)
     hop_size = frame_size // 2  # 50% overlap
     frames = stride_tricks.as_strided(signal, shape=(int((len(signal) - frame_size) / hop_size + 1), frame_size),
                                       strides=(signal.strides[0] * hop_size, signal.strides[0])).copy()
@@ -51,7 +50,7 @@ def plot_spectrogram(spectrogram, fs, title='Spectrogram', save_path=None):
     plt.show()
 
 # Finding top unique peak frequencies
-def find_top_unique_peak_frequencies(spectrogram, fs, frame_size, num_peaks=5):
+def find_top_unique_peak_frequencies(spectrogram, fs, frame_size, num_peaks=10):
     # Get frequency bins
     freqs = np.fft.rfftfreq(frame_size, d=1./fs)
     # Get the magnitude of the spectrogram

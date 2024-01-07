@@ -42,7 +42,7 @@ def find_top_frequencies(buffer, min_magnitude=10):
             top_magnitudes.append(fft_magnitude[idx])
     return top_frequencies, top_magnitudes  # Return both frequencies and magnitudes
 
-def visualize_fft_for_entire_clip(pcm_values, max_frequency=20000, height=None, distance=None):
+def visualize_fft_for_entire_clip(pcm_values, max_frequency=30000, height=None, distance=None): #max would be about 80k
     freqs = rfftfreq(len(pcm_values), 1 / SAMPLING_FREQUENCY)
     fft_result = rfft(pcm_values)
     fft_magnitude = np.abs(fft_result)
@@ -63,7 +63,7 @@ def visualize_fft_for_entire_clip(pcm_values, max_frequency=20000, height=None, 
     plt.plot(freqs[peaks], fft_magnitude[peaks], "x")  # Mark the peaks
     plt.xlabel('Frequency (Hz)')
     plt.ylabel('Magnitude')
-    plt.title('FFT Analysis for Entire Audio Clip (Up to 20,000 Hz)')
+    plt.title(f'FFT Analysis for Entire Audio Clip (Up to {max_frequency} Hz)')
     plt.grid(True)
     plt.show()
     return peak_freqs, peak_mags
@@ -100,7 +100,9 @@ def main():
     # input_file_path = r"Audio_Files\500Hz_IMP23ABSU_MIC.wav"
     # input_file_path = r"Audio_Files\500_to_3340_IMP23ABSU.wav"
     # input_file_path = r"Audio_Files\400_1000_1700.wav"
-    input_file_path = r"Well_Audio\Well_1\pump_discharge_inner.wav"
+    # input_file_path = r"Well_Audio\Well_2\motor_base_inner.wav"
+    input_file_path = r"Audio_Files\500Hz_IMP23ABSU_MIC.wav"  # Replace with the path to your .wav file
+
 
 
     interval_duration = 0.021  # Define the duration in seconds (21ms)

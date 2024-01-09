@@ -1,3 +1,10 @@
+'''THIS CODE IS NOT IN USE.
+
+
+
+
+USE STM32_wav_to_spectro_2.py'''
+
 import numpy as np
 import wave
 import struct
@@ -6,7 +13,7 @@ from matplotlib import pyplot as plt
 from numpy.lib import stride_tricks
 
 # Constants
-SAMPLING_FREQUENCY = 192000  # Adjusted sampling frequency
+SAMPLING_FREQUENCY = 188416  # Adjusted sampling frequency
 FRAME_SIZE = 4096            # Buffer size after zero-padding
 VALID_DATA_SIZE = 4032       # Original buffer size before zero-padding
 TIME_INTERVAL = 21 / 1000    # 21ms in seconds
@@ -27,25 +34,18 @@ def read_pcm_frames(wav_file, num_frames):
         num_frames -= chunk_size
     return np.array(pcm_values, dtype=np.float32)  # Ensure pcm_values are floating point
 
-# Short Time Fourier Transform (STFT) with Blackman window
+# Short Time Fourier Transform (STFT) without any windowing
 def stft(signal, frame_size):
-    window = np.blackman(frame_size)
     hop_size = frame_size // 2  # 50% overlap
     frames = stride_tricks.as_strided(signal, shape=(int((len(signal) - frame_size) / hop_size + 1), frame_size),
                                       strides=(signal.strides[0] * hop_size, signal.strides[0])).copy()
-    frames *= window  # Apply window to each frame
     return np.fft.rfft(frames)
 
 # Plotting the spectrogram
-# Plotting the spectrogram
 def plot_spectrogram(spectrogram, fs, title='Spectrogram', save_path=None):
-    max_freq = 20000
-    max_freq_index = int(max_freq * spectrogram.shape[1] / fs)  # Index for 20kHz
-    spectrogram = spectrogram[:, :max_freq_index]  # Truncate the spectrogram
-
     plt.figure(figsize=(12, 6))
-    plt.imshow(20 * np.log10(np.abs(spectrogram.T)), aspect='auto', origin='lower',
-               extent=[0, spectrogram.shape[0], 0, max_freq], cmap='inferno')  # Limit freq to 20kHz
+    plt.imshow(20*np.log10(np.abs(spectrogram.T)), aspect='auto', origin='lower', 
+               extent=[0, spectrogram.shape[0], 0, fs/2], cmap='inferno')
     plt.colorbar(format='%+2.0f dB')
     plt.title(title)
     plt.ylabel('Frequency [Hz]')
@@ -54,9 +54,8 @@ def plot_spectrogram(spectrogram, fs, title='Spectrogram', save_path=None):
         plt.savefig(save_path)
     plt.show()
 
-
 # Finding top unique peak frequencies
-def find_top_unique_peak_frequencies(spectrogram, fs, frame_size, num_peaks=10):
+def find_top_unique_peak_frequencies(spectrogram, fs, frame_size, num_peaks=5):
     # Get frequency bins
     freqs = np.fft.rfftfreq(frame_size, d=1./fs)
     # Get the magnitude of the spectrogram
@@ -94,5 +93,5 @@ def process_audio_file(file_path):
             print(f"{freq} Hz")
 
 if __name__ == "__main__":
-    input_file_path = r"Audio_Files\500Hz_IMP23ABSU_MIC.wav"  # Replace with the actual audio file path
-    process_audio_file(input_file_path)
+    audio_file_path = r"Audio_Files\500Hz_IMP23ABSU_MIC.wav"  # Replace with the actual audio file path
+    process_audio_file(audio_file_path)

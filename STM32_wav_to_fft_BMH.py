@@ -1,3 +1,4 @@
+'''STM32_wav_to_fft_BMH.py by Angela Larson'''
 
 import numpy as np
 from scipy.fft import rfft, rfftfreq
@@ -49,7 +50,44 @@ def find_top_frequencies(buffer, min_magnitude=10):
             top_frequencies.append(freqs[idx])
             top_magnitudes.append(fft_magnitude[idx])
     return top_frequencies, top_magnitudes  # Return both frequencies and magnitudes
+def visualize_fft_intervals(pcm_values, interval_duration=0.021, max_frequency=20000, height=None, distance=None):
+    sample_width = 2  # Assuming 16-bit PCM audio
+    frame_rate = SAMPLING_FREQUENCY
 
+    num_frames_per_interval = int(interval_duration * frame_rate)
+    total_frames = len(pcm_values)
+    intervals = total_frames // num_frames_per_interval
+
+    for i in range(intervals):
+        start_idx = i * num_frames_per_interval
+        end_idx = (i + 1) * num_frames_per_interval
+        interval_pcm_values = pcm_values[start_idx:end_idx]
+        
+        freqs = rfftfreq(len(interval_pcm_values), 1 / SAMPLING_FREQUENCY)
+        fft_result = rfft(interval_pcm_values)
+        fft_magnitude = np.abs(fft_result)
+        mask = freqs <= max_frequency  # Limit the frequency range to a maximum of 20,000 Hz
+        freqs = freqs[mask]
+        fft_magnitude = fft_magnitude[mask]
+        peaks, _ = find_peaks(fft_magnitude, height=6000000, distance=10000, threshold=20000)
+
+        peak_freqs = freqs[peaks]
+        peak_mags = fft_magnitude[peaks]
+
+        print(f"Interval {i + 1}:")
+        print("Peak Frequencies and Magnitudes:")
+        for freq, mag in zip(peak_freqs, peak_mags):
+            print(f"Frequency: {freq} Hz, Magnitude: {mag}")
+
+        plt.figure(figsize=(10, 6))
+        plt.plot(freqs, fft_magnitude)
+        plt.plot(freqs[peaks], fft_magnitude[peaks], "x")  # Mark the peaks
+        plt.xlabel('Frequency (Hz)')
+        plt.ylabel('Magnitude')
+        plt.title(f'FFT Analysis for Interval {i + 1} (Up to 20,000 Hz)')
+        plt.grid(True)
+        plt.show()
+        
 def visualize_fft_for_entire_clip(pcm_values, max_frequency=20000, height=None, distance=None):
     freqs = rfftfreq(len(pcm_values), 1 / SAMPLING_FREQUENCY)
     fft_result = rfft(pcm_values)
@@ -62,16 +100,18 @@ def visualize_fft_for_entire_clip(pcm_values, max_frequency=20000, height=None, 
     peak_freqs = freqs[peaks]
     peak_mags = fft_magnitude[peaks]
 # Print the peak frequencies and their magnitudes
+    # '''
     print("Peak Frequencies and Magnitudes:")
     for freq, mag in zip(peak_freqs, peak_mags):
         print(f"Frequency: {freq} Hz, Magnitude: {mag}")
+    # '''
 
     plt.figure(figsize=(10, 6))
     plt.plot(freqs, fft_magnitude)
     plt.plot(freqs[peaks], fft_magnitude[peaks], "x")  # Mark the peaks
     plt.xlabel('Frequency (Hz)')
     plt.ylabel('Magnitude')
-    plt.title('FFT Analysis for Entire Audio Clip (Up to 20,000 Hz)')
+    plt.title('FFT Analysis for Entire Audio Clip (Up to 20,000 Hz) STM32_wav_to_fft_BMH.py')
     plt.grid(True)
     plt.show()
     return peak_freqs, peak_mags
@@ -100,15 +140,29 @@ def process_audio_in_intervals(wav_file, interval_duration):
     sorted_freq_mags = sorted(unique_top_frequencies.items(), key=lambda x: x[1], reverse=True)
     print("Top 10 Frequencies and Magnitudes (STM32 Match):") #this prints the frequencies using the bin size & buffer process similar to how it is done in STM32
     for freq, mag in sorted_freq_mags[:10]:
-        print(f"Frequency: {freq} Hz, Magnitude: {mag}")
+        print(f"Frequency: {freq} Hz")
+    for freq, mag in sorted_freq_mags[:10]:
+        print(f"Magnitude: {mag}")
     print()
     print()
 
+def concatenate_ffts(pcm_values, interval_duration=0.021, max_frequency=20000, height=None, distance=None):
+    sample_width = 2  # Assuming 16-bit PCM audio
+    frame_rate = SAMPLING_FREQUENCY
+
+    num_frames_per_interval = int(interval_duration * frame_rate)
+    total_frames = len(pcm_values)
+    intervals = total_frames // num_frames_per_interval
+
+    concatenated_fft = np.zeros(num_frames_per_interval // 2 + 1, dtype=complex)
+
+
+
 def main():
-    input_file_path = r"Audio_Files\500Hz_IMP23ABSU_MIC.wav"
+    # input_file_path = r"Audio_Files\500Hz_IMP23ABSU_MIC.wav"
     # input_file_path = r"Audio_Files\500_to_3340_IMP23ABSU.wav"
     # input_file_path = r"Audio_Files\400_1000_1700.wav"
-    # input_file_path = r"Well_Audio\Well_1\pump_discharge_inner.wav"
+    input_file_path = r"Well_Audio\Well_4\pump_inner.wav"
 
 
     interval_duration = 0.021  # Define the duration in seconds (21ms)
@@ -120,6 +174,10 @@ def main():
         pcm_values = read_pcm_frames(wav_file, wav_file.getnframes())
         visualize_fft_for_entire_clip(pcm_values)
         
+        wav_file.rewind()
+        pcm_values = read_pcm_frames(wav_file, wav_file.getnframes())
+        # visualize_fft_intervals(pcm_values)
+        concatenate_ffts(pcm_values)
 
 if __name__ == "__main__":
     main()
